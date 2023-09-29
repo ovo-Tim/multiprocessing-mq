@@ -1,45 +1,41 @@
-# 带有消息队列的方便多进程
-## 特性
-- 极速启动: 启动新进程仅需 10ms
-- 极速运行: 发送代码(带参数)，仅需 0.8ms
-- 简单使用: 得益于 `interactivity.py` 只需要少量修改即可完成
-- 无任务时自动挂起，节省资源
+# Convenient multiprocessing with Message Queues
+[pypi](https://pypi.org/project/multiprocessing-mq/) \
+[中文](./README-cn.md)
+## Features
+- Lightning-fast startup: New processes launch in just 10ms.
+- Lightning-fast execution: Sending code (with parameters) takes only 0.8ms.
+- Easy to use: Thanks to `interactivity.py`, minimal modifications are required.
+- Automatically suspends when idle, conserving resources.
 
-## 使用
-(建议参照 `example.py`)
-### 创建进程
-``` python
+## Usage
+(We recommend referring to `example.py` for guidance)
+### Creating Processes
+```python
 import multiprocessing_mq as mq
 my_pro = mq.Process(init=init_code, suspend=True, rest_time=0)
 ```
-#### 参数
-- `init`: 初始化代码
-- `suspend`: 是否挂起
-- `rest_time`: 休眠时间
-- `process_events`: 等待进程恢复时进行事件循环，防止界面卡死
+#### Parameters
+- `init`: Initialization code.
+- `suspend`: Whether to suspend.
+- `rest_time`: Sleep time.
+- `process_events`: Performs event loop while waiting for process to resume, preventing UI from freezing.
 
-### 使用
-有多种方式可以向子进程发送任务。其中，使用 `inter` 是最简单的方式
+### Usage
+There are multiple ways to send tasks to child processes. Among them, using `inter` is the simplest.
 #### inter
-通过创建一个虚拟类来模拟子进程的环境
-例如获取子进程内 `a` 的值只需要 `my_pro.inter.a` \
-运行函数只需要 `my_pro.inter.a()`
-
+Create a virtual class to simulate the environment of a child process. For example, to retrieve the value of `a` inside the child process, you only need `my_pro.inter.a`. Running a function only requires `my_pro.inter.a()`.
 #### run_com
-运行函数并等待返回值
-``` python
-run_com(self, code:str,args:dict = {}, process_events = None)
+Run a function and wait for a return value.
+```python
+run_com(self, code: str, args: dict = {}, process_events=None)
 ```
-- `code`: 要执行的代码
-- `args`: 参数 (**注意：** `args`不会自动帮你把参数传进去，你需要在 `code` 自己传进去)
-- `process_events`: 等待进程结果时进行事件循环，防止界面卡死
+- `code`: The code to execute.
+- `args`: Arguments (**Note:** `args` won't automatically pass parameters; you need to pass them yourself within `code`).
+- `process_events`: Performs an event loop while waiting for the process result, preventing the UI from freezing.
 
-**注意：** `run_com` 使用 `eval` 来执行函数，因此你不能用它来修改变量值(你可以使用 `run_without_return`)
-
+**Note:** `run_com` uses `eval` to execute functions, so you cannot use it to modify variable values (you can use `run_without_return` instead).
 #### run_without_return
-``` python
-run_without_return(self, code:str, args:dict = {})
+```python
+run_without_return(self, code: str, args: dict = {})
 ```
-运行函数，不等待函数值，内部使用 `exec`
-
-
+Run a function without waiting for a return value; internally uses `exec`.
