@@ -42,7 +42,7 @@ def init_code():
     # print(locals())
     return locals()
     
-my_pro = mq.Process(init=init_code)
+my_pro = mq.Process(init=init_code, suspend=True)
 
 # my_pro.run_without_return("c()")
 # my_pro.run_without_return("d()")
@@ -59,14 +59,16 @@ my_pro.inter.a(msg)
 print(my_pro.inter.v_int)
 print(my_pro.inter.v_str)
 print(my_pro.inter.v_float)
-print(my_pro.inter.v_bool)
+# print(my_pro.inter.v_bool)
 
 # Complex class
 print(my_pro.inter.My_class.a)
-print(my_pro.inter.My_class.print_func())
-print(my_pro.inter.My_class())
+my_pro.inter.My_class.print_func()
+my_pro.inter.My_class()
+print(my_pro.inter.My_class.__len__())
+print(len(my_pro.inter.My_class))
 
-time.sleep(1)
-# my_pro.stop()
+# time.sleep(1)
+my_pro.stop()
 my_pro.forced_stop()
 print("finish")
