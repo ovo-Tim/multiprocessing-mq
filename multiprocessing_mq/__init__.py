@@ -3,6 +3,7 @@ import threading
 import time
 import random
 import psutil
+from . import interactivity
 
 def create_process(send_que:mp.Queue, rec_que:mp.Queue, init, rest_time, suspend):
     global running_func
@@ -74,6 +75,7 @@ class Process():
         self.suspend = suspend
         self.result = {} # result of the process {id: result}
         self.runung_id = []
+        self.inter = interactivity.inter(self.run_com)
 
         self.process = mp.Process(
                 target=create_process, 
@@ -106,21 +108,23 @@ class Process():
                     if you want to run `my_func(a)`, you should use `run_com('my_func(a)', {'a': 1})`
         '''
 
+        # print(code)
+
         pro_id = self.get_id()
         self.send_msg([pro_id, 0, code, args])
 
         while True: # wait for the result
+            # print("watting")
             if process_events is not None:
                 process_events()
+            if pro_id in self.result:
+                re = self.result[pro_id]
+                del self.result[pro_id]
+                self.runung_id.remove(pro_id)
+                return re
             if not self.rec_que.empty():
                 result = self.rec_que.get()
                 self.result[result[0]] = result[1]
-
-                if self.result[pro_id] is not None:
-                    re = self.result[pro_id]
-                    del self.result[pro_id]
-                    self.runung_id.remove(pro_id)
-                    return re
             else:
                 time.sleep(self.rest_time)
 

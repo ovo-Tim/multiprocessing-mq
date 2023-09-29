@@ -1,7 +1,13 @@
+from typing import Any
 import multiprocessing_mq as mq
 import time
 def init_code():
     import os, time
+
+    v_int = 123
+    v_str = "hello world"
+    v_float = 1.23
+    v_bool = True
 
     def a(msg):
         print(os.getpid())
@@ -19,18 +25,48 @@ def init_code():
         for i in range(10):
             print(2)
             time.sleep(0.5)
+
+    class my_class():
+        def __init__(self):
+            self.a = "from class"
+        def print_func(self):
+            print("function from class")
+        def __call__(self, *args: Any, **kwds: Any) -> Any:
+            print("Call from class")
+
+        def __len__(self):
+            return 114514
+
+    My_class = my_class()
     
     # print(locals())
     return locals()
     
 my_pro = mq.Process(init=init_code)
-my_pro.run_without_return("c()")
-my_pro.run_without_return("d()")
-time.sleep(2)
-print(my_pro.run_com("b()"))
+
+# my_pro.run_without_return("c()")
+# my_pro.run_without_return("d()")
+# time.sleep(2)
+
+# Two ways to call the function
+# print(my_pro.run_com("b()"))
+print(my_pro.inter.b())
 msg = "hello world"
-my_pro.run_without_return("a(msg)", args={"msg": msg})
-# time.sleep(3)
+# my_pro.run_without_return("a(msg)", args={"msg": msg})
+my_pro.inter.a(msg)
+
+# Get some basic type variables
+print(my_pro.inter.v_int)
+print(my_pro.inter.v_str)
+print(my_pro.inter.v_float)
+print(my_pro.inter.v_bool)
+
+# Complex class
+print(my_pro.inter.My_class.a)
+print(my_pro.inter.My_class.print_func())
+print(my_pro.inter.My_class())
+
+time.sleep(1)
 # my_pro.stop()
 my_pro.forced_stop()
 print("finish")
