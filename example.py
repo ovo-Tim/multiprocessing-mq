@@ -42,24 +42,26 @@ def init_code():
     # print(locals())
     return locals()
     
-my_pro = mq.Process(init=init_code, suspend=True)
+my_pro = mq.Process(init=init_code, suspend=True, rest_time=0)
 
 # my_pro.run_without_return("c()")
 # my_pro.run_without_return("d()")
 # time.sleep(2)
 
 # Two ways to call the function
-# print(my_pro.run_com("b()"))
-print(my_pro.inter.b())
 msg = "hello world"
-# my_pro.run_without_return("a(msg)", args={"msg": msg})
 my_pro.inter.a(msg)
+my_pro.run_without_return("a(msg)", args={"msg": msg})
+print(my_pro.run_com("b()"))
+print(my_pro.inter.b())
+
 
 # Get some basic type variables
+my_pro.inter.v_int = 5
 print(my_pro.inter.v_int)
 print(my_pro.inter.v_str)
 print(my_pro.inter.v_float)
-# print(my_pro.inter.v_bool)
+print(my_pro.inter.v_bool)
 
 # Complex class
 print(my_pro.inter.My_class.a)
