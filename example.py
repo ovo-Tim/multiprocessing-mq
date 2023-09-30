@@ -42,7 +42,7 @@ def init_code():
     # print(locals())
     return locals()
     
-my_pro = mq.Process(init=init_code, suspend=True, rest_time=0)
+my_pro = mq.Process(init=init_code, suspend=True, rest_time=0.01)
 
 # my_pro.run_without_return("c()")
 # my_pro.run_without_return("d()")

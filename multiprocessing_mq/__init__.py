@@ -2,8 +2,11 @@ import multiprocessing as mp
 import threading
 import time
 import random
+from typing import Any
 import psutil
 from . import interactivity
+import dill
+from multiprocessing.queues import Queue
 
 def create_process(send_que:mp.Queue, rec_que:mp.Queue, init, rest_time, suspend):
     global running_func, need_suspend
@@ -21,10 +24,11 @@ def create_process(send_que:mp.Queue, rec_que:mp.Queue, init, rest_time, suspend
             globals()[i] = j
 
     while True:
-        # print(1)
+        # print("loop")
         if not send_que.empty():
             # print(need_suspend, running_func)
             com = send_que.get()
+            # print(com)
             if com == -1:
                 exit()
             elif com == -2:
@@ -41,7 +45,7 @@ def create_process(send_que:mp.Queue, rec_que:mp.Queue, init, rest_time, suspend
                     rec_que.put([com[0], returns])
                     running_func -= 1
                     # print("finish", com[2])
-                    # print("send", returns)
+                    print("send", returns)
                 threading.Thread(target=func).start()
             elif com[1] == 1:
                 def func(): # run the function without returning
@@ -51,14 +55,20 @@ def create_process(send_que:mp.Queue, rec_que:mp.Queue, init, rest_time, suspend
                     running_func -= 1
                 threading.Thread(target=func).start()
         else:
-            # time.sleep(rest_time)
+            time.sleep(rest_time)
             if running_func == 0 and suspend and need_suspend and send_que.empty():
-                # print("Suspend")
                 need_suspend = False
                 __proc.suspend()
-            else:
-                time.sleep(rest_time)
-                
+                # print("Suspend")
+
+class queue_plus(Queue):
+    def __init__(self, maxsize: int = 0) -> None:
+        super().__init__(maxsize, ctx=mp.get_context())
+    def put(self, obj, block: bool = True, timeout: float | None = None) -> None:
+        obj = dill.dumps(obj)
+        return super().put(obj, block, timeout)
+    def get(self, block: bool = True, timeout: float | None = None) -> Any:
+        return dill.loads(super().get(block, timeout))
 
 class Process():
     '''
@@ -66,7 +76,7 @@ class Process():
         argments:
             init(func): init function
             process_events(func): What to do when waiting for the result
-            rest_time(float): How long to sleep when waiting for the result or task
+            rest_time(float): How long to sleep when waiting for the result or task.(I suggest you not to set 0, because queue needs time to transfer)
             suspend(bool): Whether to suspend when there is no task
 
         communicate:
@@ -82,8 +92,8 @@ class Process():
 
     '''
     def __init__(self, init = None, process_events = None, rest_time:int = 0.05, suspend = True):
-        self.send_que = mp.Queue(maxsize=1000)
-        self.rec_que = mp.Queue(maxsize=1000)
+        self.send_que = queue_plus(maxsize=1000)
+        self.rec_que = queue_plus(maxsize=1000)
 
         self.process_events = process_events
         self.rest_time = rest_time
@@ -111,9 +121,8 @@ class Process():
         self.send_que.put(msg)
         # print(msg)
         if self.suspend:
+            # print("status", self.proc_con.status())
             # print("resume")
-            self.proc_con.resume()
-            self.proc_con.resume()
             self.proc_con.resume()
 
     def run_com(self, code:str,args:dict = {}, process_events = None):
