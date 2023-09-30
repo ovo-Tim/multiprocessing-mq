@@ -71,6 +71,6 @@ print(my_pro.inter.My_class.__len__())
 print(len(my_pro.inter.My_class))
 
 # time.sleep(1)
-my_pro.stop()
+# my_pro.stop()
 my_pro.forced_stop()
 print("finish")

@@ -7,6 +7,14 @@ import psutil
 from . import interactivity
 import dill
 from multiprocessing.queues import Queue
+from multiprocessing.shared_memory import SharedMemory
+
+try:
+    waitting_list = SharedMemory(name='waitting_list', create=True, size=1)
+except:
+    waitting_list = SharedMemory(name='waitting_list')
+memory_view = memoryview(waitting_list.buf)
+memory_view[0] = 0
 
 def create_process(send_que:mp.Queue, rec_que:mp.Queue, init, rest_time, suspend):
     global running_func, need_suspend
@@ -17,25 +25,23 @@ def create_process(send_que:mp.Queue, rec_que:mp.Queue, init, rest_time, suspend
     __proc = psutil.Process(__pid)
 
     running_func = 0
-    need_suspend = True
+    need_suspend = False
     if init is not None:
         _locals = init()
         for (i,j) in _locals.items():
             globals()[i] = j
 
+    waitting_list = SharedMemory(name='waitting_list')
+
     while True:
         # print("loop")
         if not send_que.empty():
-            # print(need_suspend, running_func)
             com = send_que.get()
+            waitting_list.buf[0] -= 1
+            # print(waitting_list.buf[0])
             # print(com)
             if com == -1:
                 exit()
-            elif com == -2:
-                if send_que.empty():
-                    need_suspend = True
-                else:
-                    continue
             elif com[1] == 0:
                 def func(): # run the function and return the result
                     global running_func
@@ -44,8 +50,9 @@ def create_process(send_que:mp.Queue, rec_que:mp.Queue, init, rest_time, suspend
                     returns = eval(com[2], globals(), com[3])
                     rec_que.put([com[0], returns])
                     running_func -= 1
+                    need_suspend = True
                     # print("finish", com[2])
-                    print("send", returns)
+                    # print("send", returns)
                 threading.Thread(target=func).start()
             elif com[1] == 1:
                 def func(): # run the function without returning
@@ -53,13 +60,15 @@ def create_process(send_que:mp.Queue, rec_que:mp.Queue, init, rest_time, suspend
                     running_func += 1
                     exec(com[2], globals(), com[3])
                     running_func -= 1
+                    need_suspend = True
                 threading.Thread(target=func).start()
         else:
             time.sleep(rest_time)
-            if running_func == 0 and suspend and need_suspend and send_que.empty():
+            if running_func == 0 and suspend and waitting_list.buf[0]==0 and need_suspend:
+                # print("Suspend")
                 need_suspend = False
                 __proc.suspend()
-                # print("Suspend")
+            
 
 class queue_plus(Queue):
     def __init__(self, maxsize: int = 0) -> None:
@@ -85,7 +94,6 @@ class Process():
                 0: run code
                 1: run code without returning
                 -1: exit
-                -2: suspend
             code(str): code to run
             args(dict): 
                 arguments
@@ -119,10 +127,11 @@ class Process():
 
     def send_msg(self, msg):
         self.send_que.put(msg)
-        # print(msg)
+        memory_view[0] += 1
+        # print("send", msg)
         if self.suspend:
-            # print("status", self.proc_con.status())
-            # print("resume")
+            self.proc_con.resume()
+            self.proc_con.resume()
             self.proc_con.resume()
 
     def run_com(self, code:str,args:dict = {}, process_events = None):
@@ -149,7 +158,6 @@ class Process():
                 re = self.result[pro_id]
                 self.result.pop(pro_id)
                 self.runung_id.remove(pro_id)
-                self.send_que.put(-2)
                 return re
             if not self.rec_que.empty():
                 result = self.rec_que.get()
@@ -168,10 +176,11 @@ class Process():
         '''
         # pro_id = self.get_id()
         self.send_msg([0, 1, code, args])
-        self.send_que.put(-2)
 
     def stop(self):
+        waitting_list.unlink()
         self.send_msg(-1)
 
     def forced_stop(self):
+        self.stop()
         self.proc_con.terminate()
