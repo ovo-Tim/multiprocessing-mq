@@ -98,7 +98,7 @@ class Process():
                 arguments
 
     '''
-    def __init__(self, init = None, process_events = None, rest_time:int = 0.05, suspend = True):
+    def __init__(self, init = None, process_events = None, rest_time:int = 0.05, suspend = True, without_return:list = []):
         self.send_que = queue_plus(maxsize=1000)
         self.rec_que = queue_plus(maxsize=1000)
 
@@ -115,7 +115,7 @@ class Process():
 
         self.pid = self.process.pid
         self.proc_con = psutil.Process(self.pid)
-        self.inter = interactivity.inter(self.run_com, self.run_without_return)
+        self.inter = interactivity.inter(self.run_com, self.run_without_return, without_return=without_return)
 
     def get_id(self):
         pro_id = random.randint(1, 1e9)
