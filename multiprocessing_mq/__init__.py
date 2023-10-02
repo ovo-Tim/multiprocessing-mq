@@ -47,7 +47,11 @@ def create_process(send_que:mp.Queue, rec_que:mp.Queue, init, rest_time, suspend
                     global running_func
                     running_func += 1
                     # print(com[2])
-                    returns = eval(com[2], globals(), com[3])
+                    try:
+                        returns = eval(com[2], globals(), com[3])
+                    except Exception as e:
+                        returns = None
+                        print("Error: ", e)
                     rec_que.put([com[0], returns])
                     running_func -= 1
                     need_suspend = True
@@ -58,7 +62,11 @@ def create_process(send_que:mp.Queue, rec_que:mp.Queue, init, rest_time, suspend
                 def func(): # run the function without returning
                     global running_func
                     running_func += 1
-                    exec(com[2], globals(), com[3])
+                    try:
+                        exec(com[2], globals(), com[3])
+                    except Exception as e:
+                        returns = None
+                        print("Error: ", e)
                     running_func -= 1
                     need_suspend = True
                 threading.Thread(target=func).start()
@@ -185,5 +193,5 @@ class Process():
         self.proc_con.terminate()
 
     def create_class(self, cls, name: str):
-        self.run_without_return(f"{name} = {name}()", args={name: cls}) # instantiate
+        self.run_without_return(f"globals()['{name}'] = _cls()", args={"_cls": cls}) # instantiate
         return getattr(self.inter, name)
