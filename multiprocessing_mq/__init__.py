@@ -69,7 +69,6 @@ def create_process(send_que:mp.Queue, rec_que:mp.Queue, init, rest_time, suspend
                 need_suspend = False
                 __proc.suspend()
             
-
 class queue_plus(Queue):
     def __init__(self, maxsize: int = 0) -> None:
         super().__init__(maxsize, ctx=mp.get_context())

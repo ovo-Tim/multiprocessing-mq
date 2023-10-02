@@ -70,6 +70,9 @@ my_pro.inter.My_class()
 print(my_pro.inter.My_class.__len__())
 print(len(my_pro.inter.My_class))
 
+my_pro.inter.new_var = "This is a new var"
+print(my_pro.inter.new_var)
+
 # time.sleep(1)
 # my_pro.stop()
 my_pro.forced_stop()
