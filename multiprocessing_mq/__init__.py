@@ -115,7 +115,7 @@ class Process():
 
         self.pid = self.process.pid
         self.proc_con = psutil.Process(self.pid)
-        self.inter = interactivity.inter(self.run_com)
+        self.inter = interactivity.inter(self.run_com, self.run_without_return)
 
     def get_id(self):
         pro_id = random.randint(1, 1e9)
@@ -183,3 +183,7 @@ class Process():
     def forced_stop(self):
         self.stop()
         self.proc_con.terminate()
+
+    def create_class(self, cls, name: str):
+        self.run_without_return(f"{name} = {name}()", args={name: cls}) # instantiate
+        return getattr(self.inter, name)

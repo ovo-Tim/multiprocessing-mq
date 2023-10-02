@@ -5,9 +5,12 @@ base_type = ["<class 'int'>", "<class 'str'>", "<class 'float'>", "<class 'bool'
 # base_magic_method = ["__call__", "__len__", "__str__", "__repr__", "__bool__", "__format__", "__hash__", "__eq__", "__ne__", "__lt__", "__le__", "__gt__", "__ge__", "__add__", "__sub__", "__mul__", "__truediv__", "__floordiv__", "__mod__", "__divmod__", "__pow__", "__lshift__", "__rshift__", "__and__", "__xor__", "__or__", "__radd__", "__rsub__", "__rmul__", "__rtruediv__", "__rfloordiv__", "__rmod__", "__rdivmod__", "__rpow__", "__rlshift__", "__rrshift__", "__rand__", "__rxor__", "__ror__"]
 
 class inter():
-    def __init__(self, run_code, path:str = None):
+    def __init__(self, run_code, run_code_wr, path:str = None, without_return:list = []):
         self.___run_code = run_code
+        self.___run_code_wr = run_code_wr
         self.___path = path
+        self.___without_return = without_return
+        self.___child_class = {}
 
         # TODO: Create magic methods
         # funcs:list[str] = self.___run_code(f"dir({ self.___path })")
@@ -29,7 +32,6 @@ class inter():
             var_path = __name
 
         vtype = self.___run_code(f"str(type({ var_path }))")
-        child_class = {}
         if vtype == "<class 'function'>" or vtype == "<class 'method'>":
             # print(var_path)
             def func(*args, **kwargs):
@@ -43,16 +45,17 @@ class inter():
                     args_code += f"{i}={i}, "
                 args_code = args_code[:-2]
                 my_args.update(kwargs)
-
-                return self.___run_code(f"{var_path}({args_code})", my_args)
+                if __name in self.___without_return:
+                    return self.___run_code_wr(f"{var_path}({args_code})", my_args)
+                else:
+                    return self.___run_code(f"{var_path}({args_code})", my_args)
             return func
         elif vtype in base_type:
             return self.___run_code(f"{var_path}")
         else: # class
-            if var_path in child_class:
-                return child_class[var_path]
-            child_class[var_path] = inter(self.___run_code, var_path)
-            return child_class[var_path]
+            if not var_path in self.___child_class:
+                self.___child_class[var_path] = inter(self.___run_code, self.___run_code_wr, var_path)
+            return self.___child_class[var_path]
 
 
     # Link the magic methods
