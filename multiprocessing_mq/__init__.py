@@ -23,6 +23,7 @@ def create_process(send_que:mp.Queue, rec_que:mp.Queue, init, rest_time, suspend
     import psutil
     __pid = getpid()
     __proc = psutil.Process(__pid)
+    __results = []
 
     running_func = 0
     need_suspend = False
@@ -48,15 +49,21 @@ def create_process(send_que:mp.Queue, rec_que:mp.Queue, init, rest_time, suspend
                     running_func += 1
                     # print(com[2])
                     try:
-                        returns = eval(com[2], globals(), com[3])
+                        result = eval(com[2], globals(), com[3])
                     except Exception as e:
-                        returns = None
+                        result = None
                         print("Error: ", e)
-                    rec_que.put([com[0], returns])
+
+                    if str(type(result)) not in (interactivity.base_type):
+                        pos = len(__results)
+                        __results.append(result)
+                        result = ('inter', pos)
+
+                    rec_que.put([com[0], result])
                     running_func -= 1
                     need_suspend = True
                     # print("finish", com[2])
-                    # print("send", returns)
+                    # print("send", result)
                 threading.Thread(target=func).start()
             elif com[1] == 1:
                 def func(): # run the function without returning
@@ -65,7 +72,6 @@ def create_process(send_que:mp.Queue, rec_que:mp.Queue, init, rest_time, suspend
                     try:
                         exec(com[2], globals(), com[3])
                     except Exception as e:
-                        returns = None
                         print("Error: ", e)
                     running_func -= 1
                     need_suspend = True
@@ -165,6 +171,10 @@ class Process():
                 re = self.result[pro_id]
                 self.result.pop(pro_id)
                 self.runung_id.remove(pro_id)
+                if isinstance(re, tuple):
+                    if re[0] == 'inter':
+                        print(1)
+                        return interactivity.inter(self.run_com, self.run_without_return, path=f"results[{re[1]}]")
                 return re
             if not self.rec_que.empty():
                 result = self.rec_que.get()

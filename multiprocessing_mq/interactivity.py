@@ -69,7 +69,9 @@ class inter():
             if not var_path in self.___child_class:
                 self.___child_class[var_path] = inter(self.___run_code, self.___run_code_wr, var_path)
             return self.___child_class[var_path]
-
+        
+    def get_true_variable(self, var:str):
+        return self.___run_code(f"{var}")
 
     # Link the magic methods
     def __call__(self, *args, **kwargs):
