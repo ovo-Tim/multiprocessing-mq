@@ -1,6 +1,7 @@
 from typing import Any
 import multiprocessing_mq as mq
 import time
+import sys
 def init_code():
     import os, time
 
@@ -26,6 +27,11 @@ def init_code():
             print(2)
             time.sleep(0.5)
 
+    def e(cla):
+        print(cla.a)
+        # print(type(cla))
+        # pass
+
     class my_class():
         def __init__(self):
             self.a = "from class"
@@ -42,7 +48,7 @@ def init_code():
     # print(locals())
     return locals()
     
-my_pro = mq.Process(init=init_code, suspend=True, rest_time=0.01)
+my_pro = mq.Process(init=init_code, suspend=True, rest_time=0.05)
 
 # my_pro.run_without_return("c()")
 # my_pro.run_without_return("d()")
@@ -72,6 +78,8 @@ print(len(my_pro.inter.My_class))
 
 my_pro.inter.new_var = "This is a new var"
 print(my_pro.inter.new_var)
+
+my_pro.inter.e(my_pro.inter.My_class)
 
 # time.sleep(1)
 # my_pro.stop()

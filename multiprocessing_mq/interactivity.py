@@ -1,7 +1,7 @@
 from typing import Any
 from types import FunctionType
 
-base_type = ["<class 'int'>", "<class 'str'>", "<class 'float'>", "<class 'bool'>", "<class 'NoneType'>", "<class 'list'>", "<class 'tuple'>", "<class 'dict'>"] # The types that can just copy
+base_type = ["<class 'int'>", "<class 'str'>", "<class 'float'>", "<class 'bool'>", "<class 'NoneType'>", "<class 'list'>", "<class 'tuple'>", "<class 'dict'>", "<class 'method-wrapper'>", "<class 'wrapper_descriptor'>"] # The types that can just copy
 # base_magic_method = ["__call__", "__len__", "__str__", "__repr__", "__bool__", "__format__", "__hash__", "__eq__", "__ne__", "__lt__", "__le__", "__gt__", "__ge__", "__add__", "__sub__", "__mul__", "__truediv__", "__floordiv__", "__mod__", "__divmod__", "__pow__", "__lshift__", "__rshift__", "__and__", "__xor__", "__or__", "__radd__", "__rsub__", "__rmul__", "__rtruediv__", "__rfloordiv__", "__rmod__", "__rdivmod__", "__rpow__", "__rlshift__", "__rrshift__", "__rand__", "__rxor__", "__ror__"]
 
 class inter():
@@ -9,6 +9,7 @@ class inter():
         self.___run_code = run_code
         self.___run_code_wr = run_code_wr
         self.___path = path
+        # print("path", path)
         self.___without_return = without_return
         self.___child_class = {}
 
@@ -32,19 +33,29 @@ class inter():
             var_path = __name
 
         vtype = self.___run_code(f"str(type({ var_path }))")
+        # print(vtype)
         if vtype == "<class 'function'>" or vtype == "<class 'method'>":
             # print(var_path)
             def func(*args, **kwargs):
                 my_args = {}
                 args_code = ""
                 for i in range(len(args)):
-                    args_code += f"__arg{i}, "
-                    my_args[f"__arg{i}"] = args[i]
+                    if isinstance(args[i], inter): # If the arg is inter, it means this data has already in the process
+                        args_code += f"{args[i].___path}, "
+                    else:
+                        args_code += f"__arg{i}, "
+                        my_args[f"__arg{i}"] = args[i]
 
-                for i in kwargs.keys():
-                    args_code += f"{i}={i}, "
+                for i,j  in kwargs.items():
+                    if isinstance(j, inter): # If the arg is inter, it means this data has already in the process
+                        args_code += f"{i}={i.___path}, "
+                    else:
+                        my_args[i] = j
+                        args_code += f"{i}={i}, "
+                
                 args_code = args_code[:-2]
-                my_args.update(kwargs)
+
+                # my_args.update(kwargs)
                 if __name in self.___without_return:
                     return self.___run_code_wr(f"{var_path}({args_code})", my_args)
                 else:
@@ -52,6 +63,8 @@ class inter():
             return func
         elif vtype in base_type:
             return self.___run_code(f"{var_path}")
+        # elif vtype == "<class 'method-wrapper'>" or vtype == "<class 'wrapper_descriptor'>":
+        #     return None
         else: # class
             if not var_path in self.___child_class:
                 self.___child_class[var_path] = inter(self.___run_code, self.___run_code_wr, var_path)
